@@ -57,11 +57,11 @@ void EVIC_Initialize( void )
 
     /* Set up priority and subpriority of enabled interrupts */
     IPC2SET = 0x400U | 0x0U;  /* TIMER_2:  Priority 1 / Subpriority 0 */
+    IPC36SET = 0x400U | 0x0U;  /* UART2_FAULT:  Priority 1 / Subpriority 0 */
+    IPC36SET = 0x40000U | 0x0U;  /* UART2_RX:  Priority 1 / Subpriority 0 */
+    IPC36SET = 0x4000000U | 0x0U;  /* UART2_TX:  Priority 1 / Subpriority 0 */
     IPC45SET = 0x40000U | 0x0U;  /* I2C5_BUS:  Priority 1 / Subpriority 0 */
     IPC46SET = 0x4U | 0x0U;  /* I2C5_MASTER:  Priority 1 / Subpriority 0 */
-    IPC47SET = 0x4U | 0x0U;  /* UART6_FAULT:  Priority 1 / Subpriority 0 */
-    IPC47SET = 0x400U | 0x0U;  /* UART6_RX:  Priority 1 / Subpriority 0 */
-    IPC47SET = 0x40000U | 0x0U;  /* UART6_TX:  Priority 1 / Subpriority 0 */
 
     /* Configure Shadow Register Set */
     PRISS = 0x76543210;

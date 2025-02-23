@@ -185,11 +185,11 @@ void SYS_Initialize ( void* data )
     LATEbits.LATE7 = 1;  // Set RE7 high (LED off)
     LATCbits.LATC1 = 1;  // Set RC1 high (LED off)
 
-    TMR2_Initialize();
+	UART2_Initialize();
 
     I2C5_Initialize();
 
-	UART6_Initialize();
+    TMR2_Initialize();
 
     EVIC_Initialize();
 

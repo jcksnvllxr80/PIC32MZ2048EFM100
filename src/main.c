@@ -89,7 +89,7 @@ int main(void)
 
 void doTempAndHumSEZ0Hum() {
     char command[] = EZ0HUM_SINGLE_READ;
-    UART6_Write(command, sizeof(command) - 1);  // excluding the null terminator
+    UART2_Write(command, sizeof(command) - 1);  // excluding the null terminator
 
         // Buffer to store the response
     char responseBuffer[8];  // Adjust size based on expected response length
@@ -97,7 +97,7 @@ void doTempAndHumSEZ0Hum() {
 
     delay_ms(EZ0HUM_READ_DELAY);
     
-    // Call UART6_ReadUntil to read data until a newline character is received
+    // Call UART2_ReadUntil to read data until a newline character is received
     size_t bytesRead = ReadEZ0HumUntil(responseBuffer, sizeof(responseBuffer), '\n');
 
     // Check if any data was read
@@ -200,7 +200,7 @@ size_t ReadEZ0HumUntil(char* buffer, size_t maxSize, char terminator) {
     size_t index = 0;
     while (index < maxSize) {
         char c;
-        if (!UART6_Read(&c, 1)) {
+        if (!UART2_Read(&c, 1)) {
             break;  // Stop if no more data
         }
         buffer[index++] = c;

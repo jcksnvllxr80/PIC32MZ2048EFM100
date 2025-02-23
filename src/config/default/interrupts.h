@@ -58,11 +58,11 @@
 // *****************************************************************************
 
 void TIMER_2_InterruptHandler( void );
+void UART2_FAULT_InterruptHandler( void );
+void UART2_RX_InterruptHandler( void );
+void UART2_TX_InterruptHandler( void );
 void I2C5_BUS_InterruptHandler( void );
 void I2C5_MASTER_InterruptHandler( void );
-void UART6_FAULT_InterruptHandler( void );
-void UART6_RX_InterruptHandler( void );
-void UART6_TX_InterruptHandler( void );
 
 
 

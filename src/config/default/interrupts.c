@@ -67,11 +67,11 @@
 // *****************************************************************************
 // *****************************************************************************
 void TIMER_2_Handler (void);
+void UART2_FAULT_Handler (void);
+void UART2_RX_Handler (void);
+void UART2_TX_Handler (void);
 void I2C5_BUS_Handler (void);
 void I2C5_MASTER_Handler (void);
-void UART6_FAULT_Handler (void);
-void UART6_RX_Handler (void);
-void UART6_TX_Handler (void);
 
 
 // *****************************************************************************
@@ -84,6 +84,21 @@ void __attribute__((used)) __ISR(_TIMER_2_VECTOR, ipl1SRS) TIMER_2_Handler (void
     TIMER_2_InterruptHandler();
 }
 
+void __attribute__((used)) __ISR(_UART2_FAULT_VECTOR, ipl1SRS) UART2_FAULT_Handler (void)
+{
+    UART2_FAULT_InterruptHandler();
+}
+
+void __attribute__((used)) __ISR(_UART2_RX_VECTOR, ipl1SRS) UART2_RX_Handler (void)
+{
+    UART2_RX_InterruptHandler();
+}
+
+void __attribute__((used)) __ISR(_UART2_TX_VECTOR, ipl1SRS) UART2_TX_Handler (void)
+{
+    UART2_TX_InterruptHandler();
+}
+
 void __attribute__((used)) __ISR(_I2C5_BUS_VECTOR, ipl1SRS) I2C5_BUS_Handler (void)
 {
     I2C5_BUS_InterruptHandler();
@@ -92,21 +107,6 @@ void __attribute__((used)) __ISR(_I2C5_BUS_VECTOR, ipl1SRS) I2C5_BUS_Handler (vo
 void __attribute__((used)) __ISR(_I2C5_MASTER_VECTOR, ipl1SRS) I2C5_MASTER_Handler (void)
 {
     I2C5_MASTER_InterruptHandler();
-}
-
-void __attribute__((used)) __ISR(_UART6_FAULT_VECTOR, ipl1SRS) UART6_FAULT_Handler (void)
-{
-    UART6_FAULT_InterruptHandler();
-}
-
-void __attribute__((used)) __ISR(_UART6_RX_VECTOR, ipl1SRS) UART6_RX_Handler (void)
-{
-    UART6_RX_InterruptHandler();
-}
-
-void __attribute__((used)) __ISR(_UART6_TX_VECTOR, ipl1SRS) UART6_TX_Handler (void)
-{
-    UART6_TX_InterruptHandler();
 }
 
 
