@@ -56,6 +56,7 @@
 
 static volatile TMR_TIMER_OBJECT tmr2Obj;
 
+
 void TMR2_Initialize(void)
 {
     /* Disable Timer */
@@ -73,13 +74,14 @@ void TMR2_Initialize(void)
     TMR2 = 0x0;
 
     /*Set period */
-    PR2 = 7827U;
+    PR2 = 15624U;
 
     // Start Timer 2
     T2CONbits.TON = 1;
     
     /* Enable TMR Interrupt */
     IEC0SET = _IEC0_T2IE_MASK;
+
 }
 
 
@@ -112,7 +114,7 @@ uint16_t TMR2_CounterGet(void)
 
 uint32_t TMR2_FrequencyGet(void)
 {
-    return (46875);
+    return (31250);
 }
 
 

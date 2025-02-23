@@ -71,7 +71,7 @@
 #pragma config CP =         OFF
 
 /*** DEVCFG1 ***/
-#pragma config FNOSC =      SPLL
+#pragma config FNOSC =      FRCDIV
 #pragma config DMTINTV =    WIN_127_128
 #pragma config FSOSCEN =    OFF
 #pragma config IESO =       OFF
@@ -87,11 +87,11 @@
 #pragma config FDMTEN =     OFF
 
 /*** DEVCFG2 ***/
-#pragma config FPLLIDIV =   DIV_1
-#pragma config FPLLRNG =    RANGE_5_10_MHZ
-#pragma config FPLLICLK =   PLL_POSC
-#pragma config FPLLMULT =   MUL_2
-#pragma config FPLLODIV =   DIV_2
+#pragma config FPLLIDIV =   DIV_2
+#pragma config FPLLRNG =    RANGE_BYPASS
+#pragma config FPLLICLK =   PLL_FRC
+#pragma config FPLLMULT =   MUL_100
+#pragma config FPLLODIV =   DIV_4
 #pragma config UPLLFSEL =   FREQ_24MHZ
 
 /*** DEVCFG3 ***/
@@ -186,6 +186,10 @@ void SYS_Initialize ( void* data )
     LATCbits.LATC1 = 1;  // Set RC1 high (LED off)
 
     TMR2_Initialize();
+
+    I2C5_Initialize();
+
+	UART6_Initialize();
 
     EVIC_Initialize();
 
