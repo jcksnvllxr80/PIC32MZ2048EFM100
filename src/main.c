@@ -30,30 +30,44 @@
 #include <xc.h> // Include for PIC32 devices
 #include "definitions.h"                // SYS function prototypes
 
-#define MAIN_LOOP_DELAY 100
-#define EZ0HUM_SINGLE_READ "R"
-#define EZ0HUM_READ_DELAY 1000
+#define MAIN_LOOP_DELAY 1000
+/* EZ0HUM commands (carriage return is a MUST in these commands) */
+#define EZ0HUM_SINGLE_READ "R\r"
+#define EZ0HUM_CONTINUOUS_MODE_OFF "C,0\r"
+#define EZ0HUM_CONTINUOUS_WITH_PERIOD "C,2\r"
+#define EZ0HUM_ENABLE_HUMIDITY_OUTPUT "O,HUM,1\r"
+#define EZ0HUM_ENABLE_TEMPERATURE_OUTPUT "O,T,1\r"
+#define EZ0HUM_ENABLE_DEW_POINT_OUTPUT "O,Dew,1\r"
+
+#define EZ0HUM_READ_DELAY 300
+#define EZ0HUM_BUFFER_SIZE 24
+
+/* SHT3X commands */
 #define SHT3X_READ_DELAY 100
 #define SHT3X_ADDR 0x45 // I2C address of the SHT3x-DIS sensor; ADDR high
 
-size_t ReadEZ0HumUntil(char* buffer, size_t maxSize, char terminator);
+uint8_t resetSHT3XCommand[2] = {0x30, 0xA2};
+//uint8_t periodicMeasurement[2] = {0x20, 0x32}; // high repeatability; 1 measure / 2 seconds
+uint8_t getTempAndHumCmd[2] = {0x2C, 0x06}; // high repeatability; clock stretch
+//uint8_t getTempAndHumCmd[2] = {0x2C, 0x0D}; // med repeatability; clock stretch
+//uint8_t getTempAndHumCmd[2] = {0x2C, 0x10}; // low repeatability; clock stretch
+//uint8_t getTempAndHumCmd[2] = {0x24, 0x00}; // high repeatability
+//uint8_t getTempAndHumCmd[2] = {0x24, 0x0B}; // med repeatability
+//uint8_t getTempAndHumCmd[2] = {0x24, 0x16}; // low repeatability
+
+// Function prototypes
+size_t ReadEZ0HumUntil(char *buffer, size_t maxSize, char terminator);
 void delay_ms(unsigned int milliseconds);
+void configureSHT3X();
 void sendCommandToSHT3X(uint8_t* command);
 void readResponseFromSHT3X(uint8_t* response);
 void processSHT3XSensorData(uint8_t* tempAndHumResp);
+void doTempAndHumSHT3X();
 uint8_t calculateCRC(uint8_t* data, size_t length);
 void calculateTemperature(uint8_t* data);
 void calculateHumidity(uint8_t* data);
+void configureSEZ0Hum();
 void doTempAndHumSEZ0Hum();
-void doTempAndHumSHT3X();
-
-uint8_t resetSHT3XCommand[2] = {0x30, 0xA2};
-uint8_t getTempAndHumCmd[2] = {0x2C, 0x06}; // high repeatability clock stretch
-// uint8_t getTempAndHumCmd[2] = {0x2C, 0x0D}; // med repeatability clock stretch
-// uint8_t getTempAndHumCmd[2] = {0x2C, 0x10}; // low repeatability clock stretch
-// uint8_t getTempAndHumCmd[2] = {0x24, 0x00}; // high repeatability
-// uint8_t getTempAndHumCmd[2] = {0x24, 0x0B}; // med repeatability
-// uint8_t getTempAndHumCmd[2] = {0x24, 0x16}; // low repeatability
 
 
 // *****************************************************************************
@@ -66,17 +80,20 @@ int main(void)
 {
     /* Initialize all modules */
     SYS_Initialize(NULL);
-    sendCommandToSHT3X(resetSHT3XCommand);
+    
+    /* Initialize sensors */
+    configureSHT3X();
+    configureSEZ0Hum();
 
     while (true)
     {
         /* Maintain state machines of all polled MPLAB Harmony modules. */
         SYS_Tasks();
         
-        /* 5-pin header humidity and temperature via UART */
+        /* 5-pin header humidity and temperature via UART (polling) */
         doTempAndHumSEZ0Hum();
         
-        /* SMB humidity and temperature via i2c5 */
+        /* SMB humidity and temperature via i2c5 (polling) */
         doTempAndHumSHT3X();
         
         delay_ms(MAIN_LOOP_DELAY); // Delay before the next loop
@@ -87,12 +104,36 @@ int main(void)
     return EXIT_FAILURE;
 }
 
+void configureSEZ0Hum() {
+//    char command1[] = EZ0HUM_CONTINUOUS_WITH_PERIOD;
+    char command1[] = EZ0HUM_CONTINUOUS_MODE_OFF;
+    UART2_Write(command1, sizeof(command1) - 1);
+    delay_ms(10);
+    
+    char command2[] = EZ0HUM_ENABLE_HUMIDITY_OUTPUT;
+    UART2_Write(command2, sizeof(command2) - 1);
+    delay_ms(10);
+    
+    char command3[] = EZ0HUM_ENABLE_TEMPERATURE_OUTPUT;
+    UART2_Write(command3, sizeof(command3) - 1);
+    delay_ms(10);
+    
+    char command4[] = EZ0HUM_ENABLE_DEW_POINT_OUTPUT;
+    UART2_Write(command4, sizeof(command4) - 1);
+}
+
+void configureSHT3X() {
+    sendCommandToSHT3X(resetSHT3XCommand);
+    delay_ms(10);
+//    sendCommandToSHT3X(periodicMeasurement);
+}
+
 void doTempAndHumSEZ0Hum() {
     char command[] = EZ0HUM_SINGLE_READ;
     UART2_Write(command, sizeof(command) - 1);  // excluding the null terminator
 
         // Buffer to store the response
-    char responseBuffer[8];  // Adjust size based on expected response length
+    char responseBuffer[EZ0HUM_BUFFER_SIZE];  // Adjust size based on expected response length
     memset(responseBuffer, 0, sizeof(responseBuffer));  // Clear the buffer
 
     delay_ms(EZ0HUM_READ_DELAY);
@@ -160,7 +201,7 @@ void calculateTemperature(uint8_t* temperature_data) {
     float temperature = -45.0 + (175.0 * ((float)raw_temperature / 65535.0f));
 
     // Print the temperature with 2 decimal places
-    printf("Temperature: %.2f°C\n", temperature);
+    printf("Temperature: %.2fï¿½C\n", temperature);
 }
 
 void calculateHumidity(uint8_t* humidity_data) {
@@ -234,7 +275,7 @@ void readResponseFromSHT3X(uint8_t* response) {
 void delay_ms(unsigned int milliseconds) {
     unsigned int count;
     while (milliseconds--) {
-        for (count = 0; count < 1000; count++) {
+        for (count = 0; count < 1666; count++) {
             __asm__("NOP"); // No operation (adjust for your clock speed)
         }
     }

@@ -187,9 +187,9 @@ void SYS_Initialize ( void* data )
 
 	UART2_Initialize();
 
-    I2C5_Initialize();
-
     TMR2_Initialize();
+
+    I2C5_Initialize();
 
     EVIC_Initialize();
 
