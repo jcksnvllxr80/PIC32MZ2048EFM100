@@ -4,14 +4,14 @@
 
 
 project: PIC32MZ2048EFM100
-creation_date: 2025-03-01T20:36:21.099-05:00[America/New_York]    # ISO 8601 format: https://www.w3.org/TR/NOTE-datetime
-operating_system: Windows 10
+creation_date: 2025-03-19T16:44:51.857-04:00[America/New_York]    # ISO 8601 format: https://www.w3.org/TR/NOTE-datetime
+operating_system: Windows 11
 mcc_mode: IDE            # [IDE|Standalone|Headless]
-mcc_version: v5.5.1
+mcc_version: v5.5.2
 mcc_core_version: v5.7.1
-mplabx_version: v6.20        # if MPLAB X plugin only
+mplabx_version: v6.25        # if MPLAB X plugin only
 harmony_version: v1.5.4
-compiler: XC32 4.50
+compiler: XC32 4.60
 
 modules:
     - {name: "csp", version: "v3.21.0"}

@@ -70,7 +70,7 @@ void doTempAndHumSHT3X();
 uint8_t calculateCRC(uint8_t* data, size_t length);
 void calculateTemperature(uint8_t* data);
 void calculateHumidity(uint8_t* data);
-void configureSEZ0Hum();
+void configureEZ0Hum();
 void doTempAndHumSEZ0Hum();
 
 
@@ -87,7 +87,7 @@ int main(void)
     
     /* Initialize sensors */
     configureSHT3X();
-    configureSEZ0Hum();
+    configureEZ0Hum();
     
     delay_ms(INIT_DELAY); // Delay after initialization
 
@@ -110,7 +110,7 @@ int main(void)
     return EXIT_FAILURE;
 }
 
-void configureSEZ0Hum() {
+void configureEZ0Hum() {
 
     char command0[] = EZ0HUM_DISABLE_RESPONSE_CODES;
     UART2_Write(command0, sizeof(command0) - 1);
