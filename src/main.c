@@ -30,6 +30,7 @@
 #include <xc.h> // Include for PIC32 devices
 #include "definitions.h"                // SYS function prototypes
 
+#define INIT_DELAY 1000
 #define MAIN_LOOP_DELAY 1000
 /* EZ0HUM commands (carriage return is a MUST in these commands) */
 #define EZ0HUM_SINGLE_READ "R\r"
@@ -38,9 +39,12 @@
 #define EZ0HUM_ENABLE_HUMIDITY_OUTPUT "O,HUM,1\r"
 #define EZ0HUM_ENABLE_TEMPERATURE_OUTPUT "O,T,1\r"
 #define EZ0HUM_ENABLE_DEW_POINT_OUTPUT "O,Dew,1\r"
+#define EZ0HUM_DISABLE_RESPONSE_CODES "*OK,0\r"
 
 #define EZ0HUM_READ_DELAY 300
-#define EZ0HUM_BUFFER_SIZE 24
+// size of response with "*OK" (24) minus size of "*OK" (3) 
+// since it gets turned off in configuration
+#define EZ0HUM_BUFFER_SIZE 24 - 3  
 
 /* SHT3X commands */
 #define SHT3X_READ_DELAY 100
@@ -56,7 +60,7 @@ uint8_t getTempAndHumCmd[2] = {0x2C, 0x06}; // high repeatability; clock stretch
 //uint8_t getTempAndHumCmd[2] = {0x24, 0x16}; // low repeatability
 
 // Function prototypes
-size_t ReadEZ0HumUntil(char *buffer, size_t maxSize, char terminator);
+size_t ReadEZ0HumFixedSize(char *buffer, size_t expectedSize);
 void delay_ms(unsigned int milliseconds);
 void configureSHT3X();
 void sendCommandToSHT3X(uint8_t* command);
@@ -84,6 +88,8 @@ int main(void)
     /* Initialize sensors */
     configureSHT3X();
     configureSEZ0Hum();
+    
+    delay_ms(INIT_DELAY); // Delay after initialization
 
     while (true)
     {
@@ -105,6 +111,11 @@ int main(void)
 }
 
 void configureSEZ0Hum() {
+
+    char command0[] = EZ0HUM_DISABLE_RESPONSE_CODES;
+    UART2_Write(command0, sizeof(command0) - 1);
+    delay_ms(10);
+    
 //    char command1[] = EZ0HUM_CONTINUOUS_WITH_PERIOD;
     char command1[] = EZ0HUM_CONTINUOUS_MODE_OFF;
     UART2_Write(command1, sizeof(command1) - 1);
@@ -139,7 +150,8 @@ void doTempAndHumSEZ0Hum() {
     delay_ms(EZ0HUM_READ_DELAY);
     
     // Call UART2_ReadUntil to read data until a newline character is received
-    size_t bytesRead = ReadEZ0HumUntil(responseBuffer, sizeof(responseBuffer), '\n');
+//    size_t bytesRead = ReadEZ0HumUntil(responseBuffer, sizeof(responseBuffer), '\n');
+    size_t bytesRead = ReadEZ0HumFixedSize(responseBuffer, sizeof(responseBuffer));
 
     // Check if any data was read
     if (bytesRead > 0) {
@@ -237,19 +249,11 @@ uint8_t calculateCRC(uint8_t* data, size_t length) {
     return crc; // Return the calculated CRC
 }
 
-size_t ReadEZ0HumUntil(char* buffer, size_t maxSize, char terminator) {
-    size_t index = 0;
-    while (index < maxSize) {
-        char c;
-        if (!UART2_Read(&c, 1)) {
-            break;  // Stop if no more data
-        }
-        buffer[index++] = c;
-        if (c == terminator) {
-            break;  // Stop if terminator is received
-        }
+size_t ReadEZ0HumFixedSize(char* buffer, size_t expectedSize) {
+    if (UART2_Read(buffer, expectedSize)) {
+        return 1;  // Success
     }
-    return index;  // Return the number of bytes read
+    return 0;  // Failed to read expected bytes
 }
 
 void sendCommandToSHT3X(uint8_t* command) {
