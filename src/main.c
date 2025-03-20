@@ -47,7 +47,7 @@
 #define EZ0HUM_BUFFER_LENGTH 24 - 3  
 
 /* SHT3X commands */
-#define SHT3X_READ_DELAY 100
+#define SHT3X_READ_DELAY 300
 #define SHT3X_ADDR 0x45 // I2C address of the SHT3x-DIS sensor; ADDR high
 #define SHT3X_RESPONSE_LENGTH 6 // 6 bytes response for temperature and humidity
 #define SHT3X_COMMAND_LENGTH 2
@@ -148,7 +148,7 @@ void doTempAndHumEZ0Hum() {
     UART2_Write(command, sizeof(command) - 1);  // excluding the null terminator
 
         // Buffer to store the response
-    char responseBuffer[EZ0HUM_BUFFER_LENGTH];  // Adjust size based on expected response length
+    char responseBuffer[EZ0HUM_BUFFER_LENGTH + 1];  // Adjust size based on expected response length
     memset(responseBuffer, 0, sizeof(responseBuffer));  // Clear the buffer
 
     delay_ms(EZ0HUM_READ_DELAY);
