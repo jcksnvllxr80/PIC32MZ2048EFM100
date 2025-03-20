@@ -7,3 +7,7 @@
 * MPLABX IDE v6.20
 * MCC v5.7
 * XC32 compiler
+
+## CRC Checks for the SHT3x sensor use the NRSC-5 CRC calculation
+
+verify the calculated results in the code with this site: https://crccalc.com/?crc=6596&method=CRC-8/NRSC-5&datatype=hex&outtype=hex

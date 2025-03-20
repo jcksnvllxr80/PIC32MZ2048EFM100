@@ -27,7 +27,7 @@
 #include <stdlib.h>                     // Defines EXIT_FAILURE
 #include <string.h>
 #include <stdio.h>
-#include <xc.h> // Include for PIC32 devices
+//#include <xc.h> // Include for PIC32 devices
 #include "definitions.h"                // SYS function prototypes
 
 #define INIT_DELAY 1000
@@ -44,12 +44,13 @@
 #define EZ0HUM_READ_DELAY 300
 // size of response with "*OK" (24) minus size of "*OK" (3) 
 // since it gets turned off in configuration
-#define EZ0HUM_BUFFER_SIZE 24 - 3  
+#define EZ0HUM_BUFFER_LENGTH 24 - 3  
 
 /* SHT3X commands */
 #define SHT3X_READ_DELAY 100
 #define SHT3X_ADDR 0x45 // I2C address of the SHT3x-DIS sensor; ADDR high
-#define SHT3X_RESPONSE_SIZE 6 // 6 bytes response for temperature and humidity
+#define SHT3X_RESPONSE_LENGTH 6 // 6 bytes response for temperature and humidity
+#define SHT3X_COMMAND_LENGTH 2
 
 uint8_t resetSHT3XCommand[2] = {0x30, 0xA2};
 //uint8_t periodicMeasurement[2] = {0x20, 0x32}; // high repeatability; 1 measure / 2 seconds
@@ -72,7 +73,7 @@ uint8_t calculateCRC(uint8_t* data, size_t length);
 void calculateTemperature(uint8_t* data);
 void calculateHumidity(uint8_t* data);
 void configureEZ0Hum();
-void doTempAndHumSEZ0Hum();
+void doTempAndHumEZ0Hum();
 
 
 // *****************************************************************************
@@ -81,10 +82,10 @@ void doTempAndHumSEZ0Hum();
 // *****************************************************************************
 // *****************************************************************************
 
-int main(void)
+int main ( void )
 {
     /* Initialize all modules */
-    SYS_Initialize(NULL);
+    SYS_Initialize ( NULL );
     
     /* Initialize sensors */
     configureSHT3X();
@@ -92,23 +93,25 @@ int main(void)
     
     delay_ms(INIT_DELAY); // Delay after initialization
 
-    while (true)
+    while ( true )
     {
         /* Maintain state machines of all polled MPLAB Harmony modules. */
-        SYS_Tasks();
+        SYS_Tasks ( );
         
         /* 5-pin header humidity and temperature via UART (polling) */
-        doTempAndHumSEZ0Hum();
+        doTempAndHumEZ0Hum();
         
-        /* SMB humidity and temperature via i2c5 (polling) */
+        delay_ms(100);
+        
+        /* SMD humidity and temperature via i2c5 (polling) */
         doTempAndHumSHT3X();
         
-        delay_ms(MAIN_LOOP_DELAY); // Delay before the next loop
+//        delay_ms(MAIN_LOOP_DELAY); // Delay before the next loop
     }
 
     /* Execution should not come here during normal operation */
 
-    return EXIT_FAILURE;
+    return ( EXIT_FAILURE );
 }
 
 void configureEZ0Hum() {
@@ -140,18 +143,16 @@ void configureSHT3X() {
 //    sendCommandToSHT3X(periodicMeasurement);
 }
 
-void doTempAndHumSEZ0Hum() {
+void doTempAndHumEZ0Hum() {
     char command[] = EZ0HUM_SINGLE_READ;
     UART2_Write(command, sizeof(command) - 1);  // excluding the null terminator
 
         // Buffer to store the response
-    char responseBuffer[EZ0HUM_BUFFER_SIZE];  // Adjust size based on expected response length
+    char responseBuffer[EZ0HUM_BUFFER_LENGTH];  // Adjust size based on expected response length
     memset(responseBuffer, 0, sizeof(responseBuffer));  // Clear the buffer
 
     delay_ms(EZ0HUM_READ_DELAY);
     
-    // Call UART2_ReadUntil to read data until a newline character is received
-//    size_t bytesRead = ReadEZ0HumUntil(responseBuffer, sizeof(responseBuffer), '\n');
     size_t bytesRead = ReadEZ0HumFixedSize(responseBuffer, sizeof(responseBuffer));
 
     // Check if any data was read
@@ -163,7 +164,7 @@ void doTempAndHumSEZ0Hum() {
 }
 
 void doTempAndHumSHT3X() {
-    uint8_t tempAndHumResp[SHT3X_RESPONSE_SIZE]; // Buffer to store the response
+    uint8_t tempAndHumResp[SHT3X_RESPONSE_LENGTH]; // Buffer to store the response
 
     sendCommandToSHT3X(getTempAndHumCmd);
     
@@ -179,7 +180,7 @@ void processSHT3XSensorData(uint8_t* tempAndHumResp) {
     // Extract raw temperature and humidity
     uint8_t temp_data[2] = {tempAndHumResp[0], tempAndHumResp[1]};
     uint8_t temp_crc = tempAndHumResp[2];
-    uint8_t hum_data[2] = {tempAndHumResp[4], tempAndHumResp[3]};
+    uint8_t hum_data[2] = {tempAndHumResp[3], tempAndHumResp[4]};
     uint8_t hum_crc = tempAndHumResp[5];
 
     // Calculate CRC for temperature and humidity
@@ -214,12 +215,12 @@ void calculateTemperature(uint8_t* temperature_data) {
     float temperature = -45.0 + (175.0 * ((float)raw_temperature / 65535.0f));
 
     // Print the temperature with 2 decimal places
-    printf("Temperature: %.2f�C\n", temperature);
+    printf("Temperature: %.2f?C\n", temperature);
 }
 
 void calculateHumidity(uint8_t* humidity_data) {
     // Combine bytes into raw humidity value
-    uint16_t raw_humidity = (humidity_data[3] << 8) | humidity_data[4];
+    uint16_t raw_humidity = (humidity_data[0] << 8) | humidity_data[1];
 
     // Debug: Print raw humidity value
     printf("Raw Humidity: %u\n", raw_humidity);
@@ -260,7 +261,7 @@ size_t ReadEZ0HumFixedSize(char* buffer, size_t expectedSize) {
 void sendCommandToSHT3X(uint8_t* command) {
     while (I2C5_IsBusy()); // Wait if the I2C bus is busy
 
-    if (!I2C5_Write(SHT3X_ADDR, command, sizeof(command))) {
+    if (!I2C5_Write(SHT3X_ADDR, command, SHT3X_COMMAND_LENGTH)) {
         // Handle error (e.g., NACK or bus collision)
         I2C_ERROR error = I2C5_ErrorGet();
         printf("I2C Write Error: %d\n", error);
@@ -270,7 +271,7 @@ void sendCommandToSHT3X(uint8_t* command) {
 void readResponseFromSHT3X(uint8_t* response) {
     while (I2C5_IsBusy()); // Wait if the I2C bus is busy
 
-    if (!I2C5_Read(SHT3X_ADDR, response, SHT3X_RESPONSE_SIZE)) {
+    if (!I2C5_Read(SHT3X_ADDR, response, SHT3X_RESPONSE_LENGTH)) {
         // Handle error (e.g., NACK or bus collision)
         I2C_ERROR error = I2C5_ErrorGet();
         printf("I2C Read Error: %d\n", error);
