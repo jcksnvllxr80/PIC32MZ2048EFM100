@@ -49,6 +49,7 @@
 /* SHT3X commands */
 #define SHT3X_READ_DELAY 100
 #define SHT3X_ADDR 0x45 // I2C address of the SHT3x-DIS sensor; ADDR high
+#define SHT3X_RESPONSE_SIZE 6 // 6 bytes response for temperature and humidity
 
 uint8_t resetSHT3XCommand[2] = {0x30, 0xA2};
 //uint8_t periodicMeasurement[2] = {0x20, 0x32}; // high repeatability; 1 measure / 2 seconds
@@ -162,7 +163,7 @@ void doTempAndHumSEZ0Hum() {
 }
 
 void doTempAndHumSHT3X() {
-    uint8_t tempAndHumResp[6];           // Buffer to store the response
+    uint8_t tempAndHumResp[SHT3X_RESPONSE_SIZE]; // Buffer to store the response
 
     sendCommandToSHT3X(getTempAndHumCmd);
     
@@ -269,7 +270,7 @@ void sendCommandToSHT3X(uint8_t* command) {
 void readResponseFromSHT3X(uint8_t* response) {
     while (I2C5_IsBusy()); // Wait if the I2C bus is busy
 
-    if (!I2C5_Read(SHT3X_ADDR, response, sizeof(response))) {
+    if (!I2C5_Read(SHT3X_ADDR, response, SHT3X_RESPONSE_SIZE)) {
         // Handle error (e.g., NACK or bus collision)
         I2C_ERROR error = I2C5_ErrorGet();
         printf("I2C Read Error: %d\n", error);
